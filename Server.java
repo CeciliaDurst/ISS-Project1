@@ -1,6 +1,8 @@
 // Demonstrating Server-side Programming
 import java.net.*;
 import java.io.*;
+import java.util.regex.Pattern;
+
 
 public class Server {
   
@@ -35,7 +37,19 @@ public class Server {
                 try
                 {
                     m = in.readUTF();
-                    System.out.println(m);
+
+                    String alphaRegex = "[a-zA-Z]+"; // Regex to match on alphabetical characters
+                    if (Pattern.matches(alphaRegex, m)) { // Checks that the input string matches the given pattern
+                      
+                      // TODO: Write function that will capitalize the string
+                      System.out.println("Received alphabetical string: " + m);
+
+                    } else {
+
+                      // TODO: Ask the client to send an alphabetical string
+                      System.out.println(m + " is not alphabetical, asking the client to resend");
+
+                    }
 
                 }
                 catch(IOException i)
@@ -55,6 +69,7 @@ public class Server {
         }
     }
 
+    @SuppressWarnings("unused")
     public static void main(String args[])
     {
         Server s = new Server(6000);

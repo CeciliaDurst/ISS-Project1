@@ -58,6 +58,16 @@ public class Client {
     }
 
     public static void main(String[] args) {
+
+      if (args.length == 0) {
+
         Client c = new Client("127.0.0.1", 6000);
+      } else if ( args.length == 2) {
+
+        Client c = new Client(args[0], Integer.valueOf(args[1]));
+      } else {
+
+        System.out.println("FAIL");
+      }
     }
 }
