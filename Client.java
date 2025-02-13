@@ -10,6 +10,7 @@ public class Client {
     private DataOutputStream out = null;
 
     // Constructor to put IP address and port
+    @SuppressWarnings("deprecation")
     public Client(String addr, int port)
     {
         // Establish a connection
@@ -57,6 +58,7 @@ public class Client {
         }
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
 
       if (args.length == 0) {
