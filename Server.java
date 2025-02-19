@@ -6,10 +6,11 @@ import java.util.regex.Pattern;
 
 public class Server {
   
-    // Initialize socket and input stream
+    // Initialize socket and input/output stream
     private Socket s = null;
     private ServerSocket ss = null;
     private DataInputStream in = null;
+    private DataOutputStream out = null;
 
     // Constructor with port
     public Server(int port) {
@@ -25,14 +26,18 @@ public class Server {
             s = ss.accept();
             System.out.println("Client accepted");
 
+            // Sends responses to the client
+            out = new DataOutputStream(s.getOutputStream());
+            out.writeUTF("Hello!");
+
             // Takes input from the client socket
             in = new DataInputStream(
                 new BufferedInputStream(s.getInputStream()));
 
             String m = "";
 
-            // Reads message from client until "Over" is sent
-            while (!m.equals("Over"))
+            // Reads message from client until "bye" is sent
+            while (!m.equals("bye"))
             {
                 try
                 {
@@ -41,13 +46,14 @@ public class Server {
                     String alphaRegex = "[a-zA-Z]+"; // Regex to match on alphabetical characters
                     if (Pattern.matches(alphaRegex, m)) { // Checks that the input string matches the given pattern
                       
-                      // TODO: Write function that will capitalize the string
                       System.out.println("Received alphabetical string: " + m);
+                      String cappedString = m.toUpperCase();
+                      out.writeUTF(cappedString);
 
                     } else {
 
-                      // TODO: Ask the client to send an alphabetical string
                       System.out.println(m + " is not alphabetical, asking the client to resend");
+                      out.writeUTF("Please send an alphabetical message.");
 
                     }
 
@@ -62,6 +68,7 @@ public class Server {
             // Close connection
             s.close();
             in.close();
+            out.close();
         }
         catch(IOException i)
         {

@@ -6,8 +6,9 @@ public class Client {
   
     // Initialize socket and input/output streams
     private Socket s = null;
-    private DataInputStream in = null;
+    private DataInputStream termIn = null;
     private DataOutputStream out = null;
+    private DataInputStream serverIn = null;
 
     // Constructor to put IP address and port
     @SuppressWarnings("deprecation")
@@ -19,10 +20,13 @@ public class Client {
             System.out.println("Connected");
 
             // Takes input from terminal
-            in = new DataInputStream(System.in);
+            termIn = new DataInputStream(System.in);
 
-            // Sends output to the socket
+            // Sends output to the server
             out = new DataOutputStream(s.getOutputStream());
+
+            // Takes input from server messages
+            serverIn = new DataInputStream(s.getInputStream());
         }
         catch (UnknownHostException u) {
             System.out.println(u);
@@ -36,11 +40,29 @@ public class Client {
         // String to read message from input
         String m = "";
 
-        // Keep reading until "Over" is input
-        while (!m.equals("Over")) {
+        // Listen for Hello!
+        try {
+        m = serverIn.readUTF();
+        System.out.println(m);
+        }
+        catch (IOException i) {
+            System.out.println("Failed to receive 'Hi!' : " + i);
+        }
+
+        // Keep reading until "bye" is input
+        while (!m.equals("bye")) {
             try {
-                m = in.readLine();
+                // TODO: Timer functionality
+
+                // Read client input
+                m = termIn.readLine();
                 out.writeUTF(m);
+
+                // Listen to server
+                if(!m.equals("bye")){
+                    m = serverIn.readUTF();
+                    System.out.println(m);
+                }
             }
             catch (IOException i) {
                 System.out.println(i);
@@ -49,8 +71,9 @@ public class Client {
 
         // Close the connection
         try {
-            in.close();
+            termIn.close();
             out.close();
+            serverIn.close();
             s.close();
         }
         catch (IOException i) {
