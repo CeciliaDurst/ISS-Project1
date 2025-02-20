@@ -18,7 +18,8 @@ public class Server {
         // Starts server and waits for a connection
         try
         {
-            ss = new ServerSocket(port);
+            ss = new ServerSocket(port, 50, InetAddress.getByName("0.0.0.0"));
+            
             System.out.println("Server started");
 
             System.out.println("Waiting for a client ...");

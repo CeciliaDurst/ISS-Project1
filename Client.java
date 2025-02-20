@@ -29,11 +29,11 @@ public class Client {
             serverIn = new DataInputStream(s.getInputStream());
         }
         catch (UnknownHostException u) {
-            System.out.println(u);
+            System.out.println("Unknown host exception " + u);
             return;
         }
         catch (IOException i) {
-            System.out.println(i);
+            System.out.println("IO exception " + i);
             return;
         }
 
