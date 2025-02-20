@@ -80,7 +80,14 @@ public class Server {
     @SuppressWarnings("unused")
     public static void main(String args[])
     {
-        Server s = new Server(6000);
+        if (args.length == 0) {
+            Server s = new Server(6000);
+        } else if ( args.length == 1) {
+            Server s = new Server(Integer.valueOf(args[0]));
+        } else {
+    
+            System.out.println("FAIL");
+        }
     }
 }
 
