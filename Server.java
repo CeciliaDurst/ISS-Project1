@@ -83,10 +83,16 @@ public class Server {
         if (args.length == 0) {
             Server s = new Server(6000);
         } else if ( args.length == 1) {
-            Server s = new Server(Integer.valueOf(args[0]));
+            try{
+                Server s = new Server(Integer.valueOf(args[0]));
+            }
+            catch(Error e) {
+                System.out.println("Please enter a valid port number.");
+            }
+            
         } else {
     
-            System.out.println("FAIL");
+            System.out.println("Please enter a valid port number or leave the command line arguments blank to connect to port 6000.");
         }
     }
 }

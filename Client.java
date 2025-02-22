@@ -144,5 +144,19 @@ public class Client {
         } else {
             System.out.println("FAIL");
         }
+      if (args.length == 0) {
+        Client c = new Client("127.0.0.1", 6000);
+      } else if ( args.length == 2) {
+        try{
+            Client c = new Client(args[0], Integer.valueOf(args[1]));
+        }
+        catch(Error e) {
+            System.out.println("Please enter a valid IP address and port number.");
+        }
+      } else {
+
+        System.out.println("Please enter a valid IP address and port number or leave the command line arguments blank to connect to the local 6000 port.");
+      }
+
     }
 }
