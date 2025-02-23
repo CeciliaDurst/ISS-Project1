@@ -43,19 +43,24 @@ public class Server {
                 try
                 {
                     m = in.readUTF();
+                    if(m.equals("bye")){
+                        out.writeUTF("disconnected");
+                    }
+                    else {
 
-                    String alphaRegex = "[a-zA-Z]+"; // Regex to match on alphabetical characters
-                    if (Pattern.matches(alphaRegex, m)) { // Checks that the input string matches the given pattern
-                      
-                      System.out.println("Received alphabetical string: " + m);
-                      String cappedString = m.toUpperCase();
-                      out.writeUTF(cappedString);
+                        String alphaRegex = "[a-zA-Z]+"; // Regex to match on alphabetical characters
+                        if (Pattern.matches(alphaRegex, m)) { // Checks that the input string matches the given pattern
+                        
+                        System.out.println("Received alphabetical string: " + m);
+                        String cappedString = m.toUpperCase();
+                        out.writeUTF(cappedString);
 
-                    } else {
+                        } else {
 
-                      System.out.println(m + " is not alphabetical, asking the client to resend");
-                      out.writeUTF("Please send an alphabetical message.");
+                        System.out.println(m + " is not alphabetical, asking the client to resend");
+                        out.writeUTF("Please send an alphabetical message.");
 
+                        }
                     }
 
                 }

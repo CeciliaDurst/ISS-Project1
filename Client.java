@@ -51,35 +51,37 @@ public class Client {
 
         // Timer stats storage
         ArrayList<Long> rttTimes = new ArrayList<>();
+        int exchanges = 0;
 
         // Perform at least 5 message exchanges for RTT calculations
-        for (int i = 0; i < 5; i++) {
+        while(!m.equals("bye")) {
+            exchanges ++;
             try {
                 System.out.print("Enter a message: ");
                 m = termIn.readLine();
+                if(!m.equals("bye")){
+                    // Start the timer
+                    long startTime = System.currentTimeMillis();
 
-                // Start the timer
-                long startTime = System.currentTimeMillis();
+                    // Send message to server
+                    out.writeUTF(m);
 
-                // Send message to server
-                out.writeUTF(m);
+                    // Listen for response
+                    m = serverIn.readUTF();
 
-                // Listen for response
-                m = serverIn.readUTF();
+                    // Stop the timer
+                    long endTime = System.currentTimeMillis();
 
-                // Stop the timer
-                long endTime = System.currentTimeMillis();
+                    // Calculate round-trip time (RTT) in milliseconds
+                    long rtt = endTime - startTime;
+                    rttTimes.add(rtt);
 
-                // Calculate round-trip time (RTT) in milliseconds
-                long rtt = endTime - startTime;
-                rttTimes.add(rtt);
-
-                System.out.println("Server response: " + m);
-                System.out.println("RTT: " + rtt + " ms");
-
-                if (m.equals("Please send an alphabetical message.")) {
-                    System.out.println("Error received. Please enter a valid string.");
-                    i--; // Repeat the attempt
+                    System.out.println("Server response: " + m);
+                    System.out.println("RTT: " + rtt + " ms");
+                }
+                else{
+                    // Send bye to server
+                    out.writeUTF(m);
                 }
 
             } catch (IOException e) {
@@ -87,8 +89,6 @@ public class Client {
             }
         }
 
-        // Compute statistics
-        computeRTTStatistics(rttTimes);
 
         // Close the connection gracefully
         try {
@@ -96,15 +96,24 @@ public class Client {
             String response = serverIn.readUTF();
             System.out.println(response);
             if (response.equals("disconnected")) {
-                System.out.println("Exit");
+                System.out.println("exit");
+            }
+            else {
+                System.out.println("Error disconnecting.");
             }
             termIn.close();
             out.close();
             serverIn.close();
             s.close();
+    
         }
         catch (IOException i) {
             System.out.println(i);
+        }
+
+        // Compute statistics
+        if(exchanges >= 5){
+            computeRTTStatistics(rttTimes);
         }
     }
 
@@ -138,13 +147,6 @@ public class Client {
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         if (args.length == 0) {
-            new Client("127.0.0.1", 6000);
-        } else if (args.length == 2) {
-            new Client(args[0], Integer.valueOf(args[1]));
-        } else {
-            System.out.println("FAIL");
-        }
-      if (args.length == 0) {
         Client c = new Client("127.0.0.1", 6000);
       } else if ( args.length == 2) {
         try{
