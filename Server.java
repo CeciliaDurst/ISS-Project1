@@ -12,6 +12,44 @@ public class Server {
     private DataInputStream in = null;
     private DataOutputStream out = null;
 
+    public void sendFile(Socket socket, String fileName) {
+
+      try {
+
+        out = new DataOutputStream(socket.getOutputStream());
+
+        File file = new File(fileName);
+        if (!file.exists()) {
+          // File does not exist, send a -1 and message to the client asking for a different file
+          out.writeLong(-1);
+          out.writeUTF("File does not exist, request a different file.");
+          out.flush();
+          return;
+        }
+
+        FileInputStream fileStream = new FileInputStream(fileName);
+        OutputStream byteOut = socket.getOutputStream();
+
+        byte[] buffer = new byte[1024];
+        int bytesRead = 0;
+
+        out.writeLong(file.length());
+        out.flush();
+
+        while ((bytesRead = fileStream.read(buffer)) != -1) {
+          
+          byteOut.write(buffer, 0, bytesRead);
+        }
+
+        byteOut.flush();
+        fileStream.close();
+
+      } catch (IOException e) {
+
+        System.out.println(e);
+      }
+    }
+
     // Constructor with port
     public Server(int port) {
       
@@ -48,19 +86,8 @@ public class Server {
                     }
                     else {
 
-                        String alphaRegex = "[a-zA-Z]+"; // Regex to match on alphabetical characters
-                        if (Pattern.matches(alphaRegex, m)) { // Checks that the input string matches the given pattern
-                        
-                        System.out.println("Received alphabetical string: " + m);
-                        String cappedString = m.toUpperCase();
-                        out.writeUTF(cappedString);
-
-                        } else {
-
-                        System.out.println(m + " is not alphabetical, asking the client to resend");
-                        out.writeUTF("Please send an alphabetical message.");
-
-                        }
+                      // Take input from server socket (will be name of a file)
+                      sendFile(s, m);
                     }
 
                 }

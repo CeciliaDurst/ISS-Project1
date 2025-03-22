@@ -10,6 +10,51 @@ public class Client {
     private DataInputStream termIn = null;
     private DataOutputStream out = null;
     private DataInputStream serverIn = null;
+    private DataInputStream in = null;
+
+    public void receiveFile(Socket socket, String fileName) {
+
+      try {
+
+        out = new DataOutputStream(socket.getOutputStream());
+        out.writeUTF(fileName);
+        out.flush();
+
+        InputStream input = socket.getInputStream();
+
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+
+        in = new DataInputStream(socket.getInputStream());
+        long fileSize = in.readLong();
+
+        // File not found on server side (denoted by a -1)
+        if (fileSize == -1) {
+          // Read in the rest of the message from the server and display it to the user
+          String serverMsg = in.readUTF();
+          System.out.println(serverMsg);
+          return;
+          
+        }
+
+        fileName = fileName.substring(0, 1).toUpperCase() + fileName.substring(1);
+        FileOutputStream fileStream = new FileOutputStream("new" + fileName);
+
+        long totalRead = 0;
+
+        while (totalRead < fileSize && (bytesRead = input.read(buffer)) != -1) {
+
+          fileStream.write(buffer, 0, bytesRead);
+          totalRead += bytesRead;
+        }
+
+        fileStream.close();
+
+      } catch (IOException e) {
+
+        System.out.println(e);
+      }
+    }
 
     // Constructor to put IP address and port
     @SuppressWarnings("deprecation")
@@ -57,17 +102,14 @@ public class Client {
         while(!m.equals("bye")) {
             exchanges ++;
             try {
-                System.out.print("Enter a message: ");
+                System.out.print("Enter a file name: ");
                 m = termIn.readLine();
                 if(!m.equals("bye")){
                     // Start the timer
                     long startTime = System.currentTimeMillis();
 
-                    // Send message to server
-                    out.writeUTF(m);
-
-                    // Listen for response
-                    m = serverIn.readUTF();
+                    // Request file from server
+                    receiveFile(s, m);
 
                     // Stop the timer
                     long endTime = System.currentTimeMillis();
