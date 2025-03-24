@@ -125,7 +125,6 @@ public class Client {
                     long rtt = endTime - startTime;
                     rttTimes.add(rtt);
 
-                    System.out.println("Server response: " + m);
                     System.out.println("RTT: " + rtt + " ms");
                 }
                 else{

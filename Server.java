@@ -20,7 +20,7 @@ public class Server {
         if (!file.exists()) {
           // File does not exist, send a -1 and message to the client asking for a different file
           out.writeLong(-1);
-          out.writeUTF("File does not exist, request a different file.");
+          out.writeUTF("File not found");
           out.flush();
           return;
         }
