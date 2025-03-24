@@ -1,8 +1,6 @@
 // Demonstrating Server-side Programming
 import java.net.*;
 import java.io.*;
-import java.util.regex.Pattern;
-
 
 public class Server {
   
@@ -85,7 +83,7 @@ public class Server {
                         out.writeUTF("disconnected");
                     }
                     else {
-
+                        m = "server/" + m;
                       // Take input from server socket (will be name of a file)
                       sendFile(s, m);
                     }

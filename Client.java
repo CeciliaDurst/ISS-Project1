@@ -14,43 +14,50 @@ public class Client {
 
     public void receiveFile(Socket socket, String fileName) {
 
-      try {
-
-        out = new DataOutputStream(socket.getOutputStream());
-        out.writeUTF(fileName);
-        out.flush();
-
-        InputStream input = socket.getInputStream();
-
-        byte[] buffer = new byte[1024];
-        int bytesRead;
-
-        in = new DataInputStream(socket.getInputStream());
-        long fileSize = in.readLong();
-
-        // File not found on server side (denoted by a -1)
-        if (fileSize == -1) {
-          // Read in the rest of the message from the server and display it to the user
-          String serverMsg = in.readUTF();
-          System.out.println(serverMsg);
-          return;
-          
+        // Create client directory if it doesn't exist.
+        File directory = new File("client");
+        if(!directory.exists()){
+            directory.mkdirs();
         }
 
-        fileName = fileName.substring(0, 1).toUpperCase() + fileName.substring(1);
-        FileOutputStream fileStream = new FileOutputStream("new" + fileName);
+        // Begin reading files
+        try {
+            out = new DataOutputStream(socket.getOutputStream());
+            out.writeUTF(fileName);
+            out.flush();
 
-        long totalRead = 0;
+            InputStream input = socket.getInputStream();
 
-        while (totalRead < fileSize && (bytesRead = input.read(buffer)) != -1) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
 
-          fileStream.write(buffer, 0, bytesRead);
-          totalRead += bytesRead;
-        }
+            in = new DataInputStream(socket.getInputStream());
+            long fileSize = in.readLong();
 
-        fileStream.close();
+            // File not found on server side (denoted by a -1)
+            if (fileSize == -1) {
+            // Read in the rest of the message from the server and display it to the user
+            String serverMsg = in.readUTF();
+            System.out.println(serverMsg);
+            return;
+            
+            }
 
-      } catch (IOException e) {
+            fileName = "client/" + fileName;
+
+            FileOutputStream fileStream = new FileOutputStream(fileName);
+
+            long totalRead = 0;
+
+            while (totalRead < fileSize && (bytesRead = input.read(buffer)) != -1) {
+
+            fileStream.write(buffer, 0, bytesRead);
+            totalRead += bytesRead;
+            }
+
+            fileStream.close();
+
+        } catch (IOException e) {
 
         System.out.println(e);
       }
