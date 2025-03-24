@@ -83,7 +83,6 @@ public class Server {
                         out.writeUTF("disconnected");
                     }
                     else {
-                        m = "server/" + m;
                       // Take input from server socket (will be name of a file)
                       sendFile(s, m);
                     }
