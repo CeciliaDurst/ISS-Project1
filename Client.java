@@ -113,6 +113,7 @@ public class Client {
 
                     // Handle Batch Request
                     if(m.equals("Awaiting batch request")){
+                        // TODO: IMPLEMENT RANDOM ORDER BATCH
                         // List<String> fileRequests = getRandomBatchRequest();
                         List<String> fileRequests = List.of("sample02.bmp", "sample05.bmp", "sample01.bmp");
                         ObjectOutputStream sendList = new ObjectOutputStream(s.getOutputStream());
