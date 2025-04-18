@@ -2,6 +2,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Client {
   
@@ -12,7 +13,8 @@ public class Client {
     private DataInputStream serverIn = null;
     private DataInputStream in = null;
 
-    public void receiveFile(Socket socket, String fileName) {
+
+    public void receiveBatch() {
 
         // Create client directory if it doesn't exist.
         File directory = new File("client");
@@ -22,44 +24,36 @@ public class Client {
 
         // Begin reading files
         try {
-            out = new DataOutputStream(socket.getOutputStream());
-            out.writeUTF(fileName);
-            out.flush();
+            // Read total file amount in batch
+            in = new DataInputStream(s.getInputStream());
+            int fileAmount = in.readInt();
 
-            InputStream input = socket.getInputStream();
+            // Read each file
+            for(int i = 0; i < fileAmount; i++){
+                String fileName = in.readUTF();
+                long fileSize = in.readLong();
 
-            byte[] buffer = new byte[1024];
-            int bytesRead;
+                // File not found on server side (denoted by a -1)
+                if(fileSize == -1){
+                    System.out.println("File " + fileName + " not found on server.");
+                    continue;
+                }
 
-            in = new DataInputStream(socket.getInputStream());
-            long fileSize = in.readLong();
+                FileOutputStream fout = new FileOutputStream("client/" + fileName);
+                byte[] buffer = new byte[1024];
+                long bytesRemaining = fileSize;
 
-            // File not found on server side (denoted by a -1)
-            if (fileSize == -1) {
-            // Read in the rest of the message from the server and display it to the user
-            String serverMsg = in.readUTF();
-            System.out.println(serverMsg);
-            return;
-            
+                while (bytesRemaining > 0) {
+                    int bytesToRead = (int)Math.min(buffer.length, bytesRemaining);
+                    int bytesRead = in.read(buffer, 0, bytesToRead);
+                    fout.write(buffer, 0, bytesRead);
+                    bytesRemaining -= bytesRead;
+                }
+                fout.close();
             }
-
-            fileName = "client/" + fileName;
-
-            FileOutputStream fileStream = new FileOutputStream(fileName);
-
-            long totalRead = 0;
-
-            while (totalRead < fileSize && (bytesRead = input.read(buffer)) != -1) {
-
-            fileStream.write(buffer, 0, bytesRead);
-            totalRead += bytesRead;
-            }
-
-            fileStream.close();
 
         } catch (IOException e) {
-
-        System.out.println(e);
+            e.printStackTrace();
       }
     }
 
@@ -109,15 +103,27 @@ public class Client {
         while(!m.equals("bye")) {
             exchanges ++;
             try {
-                System.out.print("Enter a file name: ");
                 m = termIn.readLine();
                 if(!m.equals("bye")){
                     // Start the timer
                     long startTime = System.currentTimeMillis();
 
-                    // Request file from server
-                    receiveFile(s, m);
+                    out.writeUTF(m);
+                    m = serverIn.readUTF();
 
+                    // Handle Batch Request
+                    if(m.equals("Awaiting batch request")){
+                        // List<String> fileRequests = getRandomBatchRequest();
+                        List<String> fileRequests = List.of("sample02.bmp", "sample05.bmp", "sample01.bmp");
+                        ObjectOutputStream sendList = new ObjectOutputStream(s.getOutputStream());
+                        sendList.writeObject(fileRequests);
+                        sendList.flush();
+                        receiveBatch();
+                    }
+                    else {
+                        System.out.println(m);
+                    }
+                    
                     // Stop the timer
                     long endTime = System.currentTimeMillis();
 
@@ -126,6 +132,11 @@ public class Client {
                     rttTimes.add(rtt);
 
                     System.out.println("RTT: " + rtt + " ms");
+
+                    // Compute statistics
+                    if(exchanges >= 5){
+                        computeRTTStatistics(rttTimes);
+                    }
                 }
                 else{
                     // Send bye to server
@@ -157,11 +168,6 @@ public class Client {
         }
         catch (IOException i) {
             System.out.println(i);
-        }
-
-        // Compute statistics
-        if(exchanges >= 5){
-            computeRTTStatistics(rttTimes);
         }
     }
 

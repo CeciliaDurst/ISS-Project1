@@ -1,5 +1,6 @@
 // Demonstrating Server-side Programming
 import java.net.*;
+import java.util.List;
 import java.io.*;
 
 public class Server {
@@ -7,8 +8,6 @@ public class Server {
     // Initialize socket and input/output stream
     private Socket s = null;
     private ServerSocket ss = null;
-    private DataInputStream in = null;
-    private DataOutputStream out = null;
 
     // Constructor with port
     public Server(int port) {
@@ -64,37 +63,44 @@ class handleClient implements Runnable {
         this.clientSocket = s;
     }
 
-    private void sendFile(String fileName) {
+    private void sendBatch(List<String> files) {
         try {
-          out = new DataOutputStream(clientSocket.getOutputStream());
+            out = new DataOutputStream(clientSocket.getOutputStream());
   
-          File file = new File(fileName);
-          if (!file.exists()) {
-            // File does not exist, send a -1 and message to the client asking for a different file
-            out.writeLong(-1);
-            out.writeUTF("File not found");
-            out.flush();
-            return;
-          }
-  
-          FileInputStream fileStream = new FileInputStream(fileName);
-          OutputStream byteOut = clientSocket.getOutputStream();
-  
-          byte[] buffer = new byte[1024];
-          int bytesRead = 0;
-  
-          out.writeLong(file.length());
+            // Start by sending the amount of files in the batch 
+            // (We always know it should be 10, but we're formatting the batch.)
+            out.writeInt(files.size());
+
+            // Send each file
+            for(String fileName : files) {
+                File file = new File(fileName);
+
+                // If file does not exist, send a -1 and message to the client asking for a different file
+                if (!file.exists()) {
+                    out.writeLong(-1);
+                    out.writeUTF("File not found");
+                    out.flush();
+                    continue;
+                }
+
+                FileInputStream fin = new FileInputStream(file);
+                out.writeUTF(file.getName());
+                out.writeLong(file.length());
+
+                byte[] buffer = new byte[1024];
+                int bytesRead = 0;
+        
+                while ((bytesRead = fin.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+
+                fin.close();
+            }
+
           out.flush();
   
-          while ((bytesRead = fileStream.read(buffer)) != -1) {
-            byteOut.write(buffer, 0, bytesRead);
-          }
-  
-          byteOut.flush();
-          fileStream.close();
-  
         } catch (IOException e) {
-          System.out.println(e);
+          e.printStackTrace();
         }
     }
 
@@ -121,16 +127,24 @@ class handleClient implements Runnable {
                     if(m.equals("bye")){
                         out.writeUTF("disconnected");
                     }
-                    else {
-                    // Take input from server socket (will be name of a file)
-                    sendFile(m);
+                    else if(m.equals("SEND")){
+                        out.writeUTF("Awaiting batch request");
+                        ObjectInputStream receiveList = new ObjectInputStream(clientSocket.getInputStream());
+                        List<String> files = (List<String>) receiveList.readObject();
+                        sendBatch(files);
                     }
-
+                    else {
+                    System.out.println("Received invalid command");
+                    out.writeUTF("Please send 'SEND' to begin batch transfer or 'bye' to quit.");
+                    }
                 }
                 catch(IOException i)
                 {
                     System.out.println(i);
                     break;
+                } catch (ClassNotFoundException e) {
+                    // List received not in List<String> format
+                    e.printStackTrace();
                 }
             }
 
