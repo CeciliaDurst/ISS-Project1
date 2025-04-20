@@ -35,8 +35,8 @@ public class Server {
     }
 
     @SuppressWarnings("unused")
-    public static void main(String args[])
-    {
+    public static void main(String args[]) {
+
         if (args.length == 0) {
             Server s = new Server(6000);
         } else if ( args.length == 1) {
@@ -114,6 +114,12 @@ class handleClient implements Runnable {
 
             // Send responses to the client
             out.writeUTF("Hello!");
+            out.flush();
+
+            // Send thread number corresponding to this client
+            long threadID = Thread.currentThread().threadId();
+            out.writeLong(threadID);
+            out.flush();
 
             // Takes input from the client socket
             String m = "";
@@ -130,6 +136,7 @@ class handleClient implements Runnable {
                     else if(m.equals("SEND")){
                         out.writeUTF("Awaiting batch request");
                         ObjectInputStream receiveList = new ObjectInputStream(clientSocket.getInputStream());
+                        @SuppressWarnings("unchecked")
                         List<String> files = (List<String>) receiveList.readObject();
                         sendBatch(files);
                     }

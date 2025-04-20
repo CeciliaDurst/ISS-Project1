@@ -2,6 +2,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Client {
@@ -14,23 +15,42 @@ public class Client {
     private DataInputStream in = null;
 
 
-    public void receiveBatch() {
+    public static List<String> getShuffledList(int max) {
+
+        String fileName = "sample";
+        String fileEnd = ".bmp";
+
+        List<String> shuffledFiles = new ArrayList<>();
+        for (int i = 1; i <= max; i++) {
+
+          String file = fileName;
+            
+          if (i < 10) { file += "0"; }
+
+          shuffledFiles.add(file + String.valueOf(i) + fileEnd);
+        }
+
+        Collections.shuffle(shuffledFiles);
+        return shuffledFiles;
+    }
+
+
+    public void receiveBatch(long threadID, int batchSize) {
 
         // Create client directory if it doesn't exist.
-        File directory = new File("client");
+        File directory = new File("client" + threadID);
         if(!directory.exists()){
             directory.mkdirs();
         }
 
         // Begin reading files
         try {
-            // Read total file amount in batch
+
             in = new DataInputStream(s.getInputStream());
-            int fileAmount = in.readInt();
 
             // Read each file
-            for(int i = 0; i < fileAmount; i++){
-                String fileName = in.readUTF();
+            for(int i = 0; i < batchSize; i++){
+                String fileName = "newFile" + String.valueOf(i) + in.readUTF();
                 long fileSize = in.readLong();
 
                 // File not found on server side (denoted by a -1)
@@ -39,7 +59,7 @@ public class Client {
                     continue;
                 }
 
-                FileOutputStream fout = new FileOutputStream("client/" + fileName);
+                FileOutputStream fout = new FileOutputStream("client" + String.valueOf(threadID) + "/" + fileName);
                 byte[] buffer = new byte[1024];
                 long bytesRemaining = fileSize;
 
@@ -85,11 +105,16 @@ public class Client {
 
         // String to read message from input
         String m = "";
+        Long threadID = null;
 
-        // Listen for Hello!
+        // Listen for Hello! and threadID
         try {
             m = serverIn.readUTF();
             System.out.println(m);
+
+            threadID = serverIn.readLong();
+            System.out.println("My thread is: " + threadID);
+
         }
         catch (IOException i) {
             System.out.println("Failed to receive 'Hello!' : " + i);
@@ -113,13 +138,14 @@ public class Client {
 
                     // Handle Batch Request
                     if(m.equals("Awaiting batch request")){
-                        // TODO: IMPLEMENT RANDOM ORDER BATCH
-                        // List<String> fileRequests = getRandomBatchRequest();
-                        List<String> fileRequests = List.of("sample02.bmp", "sample05.bmp", "sample01.bmp");
+                        List<String> fileRequests = getShuffledList(10); // We get this number (10) from the server no?
                         ObjectOutputStream sendList = new ObjectOutputStream(s.getOutputStream());
                         sendList.writeObject(fileRequests);
                         sendList.flush();
-                        receiveBatch();
+
+                        // Recieve the batch size
+                        int fileAmount = serverIn.readInt();
+                        receiveBatch(threadID, fileAmount);
                     }
                     else {
                         System.out.println(m);
@@ -201,6 +227,7 @@ public class Client {
 
     @SuppressWarnings("unused")
     public static void main(String[] args) {
+
         if (args.length == 0) {
         Client c = new Client("127.0.0.1", 6000);
       } else if ( args.length == 2) {
