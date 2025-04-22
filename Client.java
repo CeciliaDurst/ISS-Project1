@@ -4,7 +4,6 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 public class Client {
   
     // Initialize socket and input/output streams
@@ -15,10 +14,11 @@ public class Client {
     private DataInputStream in = null;
 
 
-    public static List<String> getShuffledList(int max) {
+    public static List<String> getShuffledList(int batchSize) {
 
-        if(max < 1 || max > 10){
-            max = 10;
+      int max = 10;
+        if(batchSize < 1 || batchSize > 10){
+            batchSize = 10;
         }
 
         String fileName = "sample";
@@ -35,7 +35,7 @@ public class Client {
         }
 
         Collections.shuffle(shuffledFiles);
-        return shuffledFiles;
+        return new ArrayList<>(shuffledFiles.subList(0, batchSize));
     }
 
 
