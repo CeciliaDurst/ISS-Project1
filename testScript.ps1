@@ -13,37 +13,39 @@
   The batch size to pass to each client.
 
 .NOTES
-  - Requires PowerShell 7+ on macOS or Windows (or PowerShell 5.1 on Windows).
-  - script.ps1 must live in the same folder as this file.
+  - Works on PowerShell 7+ (Core) on macOS or Windows, and on Windows PowerShell 5.1.
+  - Ensure `script.ps1` resides in the same directory as this file.
 #>
 
 param(
-  [Parameter(Mandatory)] [int]    $numClients,
-  [Parameter(Mandatory)] [string] $IP,
-  [Parameter(Mandatory)] [int]    $BatchSize
+    [Parameter(Mandatory)] [int]    $numClients,
+    [Parameter(Mandatory)] [string] $IP,
+    [Parameter(Mandatory)] [int]    $BatchSize
 )
 
-# 1) Pick the right host executable
-#    - On PS 7+ (Core), use 'pwsh' (pwsh.exe on Windows, pwsh on macOS)
-#    - On Desktop (PS 5.1), fall back to 'powershell'
-if ($PSVersionTable.PSEdition -eq 'Desktop') {
-    $hostExe = 'powershell'
+# Determine host executable based on PowerShell version
+if ($PSVersionTable.PSVersion.Major -ge 7) {
+    # PowerShell Core (7+)
+    $exeName = 'pwsh'
+    if ($env:OS -eq 'Windows_NT') {
+        $exeName += '.exe'
+    }
+    $hostExe = Join-Path $PSHOME $exeName
 } else {
-    # Core: point at the pwsh in $PSHOME (this works on both Windows & macOS)
-    $hostExe = Join-Path $PSHOME ('pwsh' + ($IsWindows ? '.exe' : ''))
+    # Windows PowerShell 5.1
+    $hostExe = 'powershell'
 }
 
-# 2) Path to the child script
-#    Use $PSScriptRoot so it works no matter where you invoke it from
+# Path to the child script
 $childScript = Join-Path $PSScriptRoot 'script.ps1'
 
-# 3) Launch N copies in parallel
+# Launch specified number of clients in parallel
 for ($i = 1; $i -le $numClients; $i++) {
     Start-Process -FilePath $hostExe -ArgumentList @(
-      '-NoProfile'
-      '-File' , $childScript
-      '-IP'   , $IP
-      '-BatchSize', $BatchSize
+        '-NoProfile'
+        '-File',      $childScript
+        '-IP',        $IP
+        '-BatchSize', $BatchSize
     )
 }
 
