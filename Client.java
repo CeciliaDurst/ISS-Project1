@@ -17,6 +17,10 @@ public class Client {
 
     public static List<String> getShuffledList(int max) {
 
+        if(max < 1 || max > 10){
+            max = 10;
+        }
+
         String fileName = "sample";
         String fileEnd = ".bmp";
 
@@ -138,14 +142,24 @@ public class Client {
 
                     // Handle Batch Request
                     if(m.equals("Awaiting batch request")){
-                        List<String> fileRequests = getShuffledList(10); // We get this number (10) from the server no?
-                        ObjectOutputStream sendList = new ObjectOutputStream(s.getOutputStream());
-                        sendList.writeObject(fileRequests);
-                        sendList.flush();
+                        System.out.println("Enter requested batch size (Invalid input will default to 10): ");
+                        try{
+                            m = termIn.readLine();
+                            Integer.parseInt(m);
+                        } catch (Exception e){
+                            System.out.println("Defaulting to 10.");
+                            m = "-1";
+                        }
+                        finally{
+                            List<String> fileRequests = getShuffledList(Integer.parseInt(m)); // We get this number (10) from the server no?
+                            ObjectOutputStream sendList = new ObjectOutputStream(s.getOutputStream());
+                            sendList.writeObject(fileRequests);
+                            sendList.flush();
 
-                        // Recieve the batch size
-                        int fileAmount = serverIn.readInt();
-                        receiveBatch(threadID, fileAmount);
+                            // Recieve the batch size
+                            int fileAmount = serverIn.readInt();
+                            receiveBatch(threadID, fileAmount);
+                            }
                     }
                     else {
                         System.out.println(m);
