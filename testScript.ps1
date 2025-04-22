@@ -42,6 +42,7 @@ $childScript = Join-Path $PSScriptRoot 'script.ps1'
 # Launch specified number of clients in parallel
 for ($i = 1; $i -le $numClients; $i++) {
     Start-Process -FilePath $hostExe -ArgumentList @(
+        '-NoExit'
         '-NoProfile'
         '-File',      $childScript
         '-IP',        $IP
