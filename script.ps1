@@ -3,7 +3,7 @@ param(
   [Parameter(Mandatory)] [int]$BatchSize
 )
 
-javac .\Client.java
+javac ./Client.java
 
 $protocol = @(
   (1..5 | ForEach-Object { 'SEND'; $BatchSize })
