@@ -45,13 +45,12 @@ $childScript = Join-Path $PSScriptRoot 'script.ps1'
 for ($i = 1; $i -le $numClients; $i++) {
     if ($isMac) {
         # On macOS, use AppleScript to open a new Terminal window and run the command
-        $escapedCommand = "$hostExe -NoProfile -File \"$childScript\" -IP $IP -BatchSize $BatchSize"
-        $appleScript = "tell application \"Terminal\" to do script \"$escapedCommand\""
+        $escapedCommand = "$hostExe -NoProfile -File /"$childScript/" -IP $IP -BatchSize $BatchSize"
+        $appleScript = "tell application /"Terminal/" to do script /"$escapedCommand/""
         Start-Process -FilePath 'osascript' -ArgumentList '-e', $appleScript
     } else {
         # On Windows, Start-Process will open a new console window by default
         Start-Process -FilePath $hostExe -ArgumentList @(
-            '-NoExit'
             '-NoProfile'
             '-File',      $childScript
             '-IP',        $IP
