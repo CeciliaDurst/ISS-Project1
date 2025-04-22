@@ -39,15 +39,23 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
 # Path to the child script
 $childScript = Join-Path $PSScriptRoot 'script.ps1'
 
-# Launch specified number of clients in parallel
+# Launch specified number of specified number of clients in parallel in parallel
 for ($i = 1; $i -le $numClients; $i++) {
-    Start-Process -FilePath $hostExe -ArgumentList @(
-        '-NoExit'
-        '-NoProfile'
-        '-File',      $childScript
-        '-IP',        $IP
-        '-BatchSize', $BatchSize
-    )
+    if ($isMac) {
+        # On macOS, use AppleScript to open a new Terminal window and run the command
+        $escapedCommand = "$hostExe -NoProfile -File /"$childScript/" -IP $IP -BatchSize $BatchSize"
+        $appleScript = "tell application /"Terminal/" to do script /"$escapedCommand/""
+        Start-Process -FilePath 'osascript' -ArgumentList '-e', $appleScript
+    } else {
+        # On Windows, Start-Process will open a new console window by default
+        Start-Process -FilePath $hostExe -ArgumentList @(
+            '-NoExit'
+            '-NoProfile'
+            '-File',      $childScript
+            '-IP',        $IP
+            '-BatchSize', $BatchSize
+        ) -WindowStyle Normal
+    }
 }
 
 Write-Host "Spawned $numClients clients connecting to $IP with batch size $BatchSize."
