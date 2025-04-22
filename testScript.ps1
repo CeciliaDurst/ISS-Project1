@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
-  Launch multiple instances of script.ps1 in parallel,
-  passing each the same -IP and -BatchSize.
+  Launch multiple instances of script.ps1 in parallel in separate terminals,
+  passing each the same -IP and -BatchSize; works on Windows and macOS.
 
 .PARAMETER numClients
   Number of parallel clients to spin up.
@@ -13,8 +13,8 @@
   The batch size to pass to each client.
 
 .NOTES
-  - Works on PowerShell 7+ (Core) on macOS or Windows, and on Windows PowerShell 5.1.
-  - Ensure `script.ps1` resides in the same directory as this file.
+  - Requires PowerShell 7+ on both macOS and Windows, or PowerShell 5.1 on Windows.
+  - `script.ps1` must be in the same directory as this file.
 #>
 
 param(
@@ -23,39 +23,47 @@ param(
     [Parameter(Mandatory)] [int]    $BatchSize
 )
 
-# Determine host executable based on PowerShell version
+# Determine OS
+$isWindows = $false
+$isMac     = $false
+$osPlatform = [System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+    [System.Runtime.InteropServices.OSPlatform]::Windows
+)
+if ($osPlatform) { $isWindows = $true }
+if ([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform([System.Runtime.InteropServices.OSPlatform]::OSX)) { $isMac = $true }
+
+# Determine host executable
 if ($PSVersionTable.PSVersion.Major -ge 7) {
-    # PowerShell Core (7+)
-    $exeName = 'pwsh'
-    if ($env:OS -eq 'Windows_NT') {
-        $exeName += '.exe'
-    }
+    # PowerShell Core (pwsh)
+    $exeName = if ($isWindows) { 'pwsh.exe' } else { 'pwsh' }
     $hostExe = Join-Path $PSHOME $exeName
 } else {
-    # Windows PowerShell 5.1
+    # Legacy Windows PowerShell
     $hostExe = 'powershell'
 }
 
-# Path to the child script
+# Child script path
 $childScript = Join-Path $PSScriptRoot 'script.ps1'
 
-# Launch specified number of specified number of clients in parallel in parallel
+# Launch clients
 for ($i = 1; $i -le $numClients; $i++) {
     if ($isMac) {
-        # On macOS, use AppleScript to open a new Terminal window and run the command
-        $escapedCommand = "$hostExe -NoProfile -File /"$childScript/" -IP $IP -BatchSize $BatchSize"
-        $appleScript = "tell application /"Terminal/" to do script /"$escapedCommand/""
-        Start-Process -FilePath 'osascript' -ArgumentList '-e', $appleScript
+        # Build the escaped command for macOS
+        $escapedCommand = $hostExe + ' -NoProfile -File ' + '"' + $childScript + '"' + ' -IP ' + $IP + ' -BatchSize ' + $BatchSize
+        # Build AppleScript to open Terminal and run the command
+        $appleScript = 'tell application "Terminal" to do script "' + $escapedCommand + '"'
+        # Execute AppleScript
+        Start-Process -FilePath 'osascript' -ArgumentList @('-e', $appleScript)
     } else {
-        # On Windows, Start-Process will open a new console window by default
+        # Windows: open new PowerShell windows
         Start-Process -FilePath $hostExe -ArgumentList @(
-            '-NoExit'
-            '-NoProfile'
-            '-File',      $childScript
-            '-IP',        $IP
+            '-NoProfile',
+            '-NoExit',
+            '-File',      $childScript,
+            '-IP',        $IP,
             '-BatchSize', $BatchSize
         ) -WindowStyle Normal
     }
 }
 
-Write-Host "Spawned $numClients clients connecting to $IP with batch size $BatchSize."
+Write-Host "Spawned $numClients client(s) connecting to $IP with batch size $BatchSize."
